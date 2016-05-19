@@ -1,0 +1,79 @@
+#Socket client example in python
+
+import SocketServer #SocketServer Package
+import socket #for sockets
+import time #for time
+import sys #for exit
+
+try:
+	#creat an AF_INET, STREAM socket (TCP)
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	#s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+except socket.error, msg:
+	print 'Failed to create socket. Error code: ' + str(msg[0]) + ', Error message : ' + msg[1]
+	sys.exit();
+
+print 'Socket Created'
+
+host = 'daBlaqChat';
+port = 8085;
+
+try:
+	remote_ip = socket.gethostbyname( host )
+except socket.gaierror:
+	#could not resolve
+	print 'Hostname could not be resolved. Exiting'
+	sys.exit()
+
+print('Ip address of '+ host + ' is ' + remote_ip)
+
+#connect to remote server
+s.connect((remote_ip, port))
+
+print('Socket Connected to ' + host + ' on ip ' + remote_ip)
+session = s.recv(2048)
+print session
+
+while 1:
+
+	data = raw_input( " You: " )
+	print 'sent: ' + data
+	s.sendall(data)
+	if data == "exit":
+		reply = s.recv(2048)
+		print reply
+		sys.exit()
+	elif data:
+		reply = s.recv(2048)
+	#while s.recv(2048) != reply:
+	#	print 'waiting for reply'
+		print reply
+s.close
+
+#while True:
+	#Start session
+#	session_start = s.recv(4096)
+#	print session_start
+
+	#Send some data to remote server
+#	while 1:
+
+
+#		message = raw_input(" enter text: ")
+#		if message == 'exit':
+#			break
+#		try:
+			#Set the whole string
+#			s.sendall(message)
+#		except socket.error:
+			#Send failed
+
+#			sys.exit("Sorry, Failed to send Exiting daBlaqChat")
+#		print 'Message sent successfuly'
+#		reply = s.recv(4096)
+#		print reply
+#		s.close()
+	#Now recieve data
+#print 'waiting for server'
+#close the socket
+#s.close()
