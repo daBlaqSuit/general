@@ -1,90 +1,71 @@
-#!/usr/bin/python
-
 import socket
-import sys
-import SocketServer
 import select
-from thread import *
 
-host = '' #For all available interfaces
-port = 8085 #Not assigned port by '' who assigns ports
+# creating a chat application using python, hope it works... 
+# date: 10/05/2016 /was created
+# Edited 25/05/2016
 
-print "Hello, Pythoneer :)!"
-
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR, 1 )
-
-print 'Socket created'
-
-try:
-	s.bind((host, port))
-except socket.error , msg:
-	print 'Bind failed. Error Code: ' + str(msg[0]) + ' message ' + msg[1]
-	sys.exit();
-
-print 'Socket bind complete'
-
-s.listen(10)
-
-print 'Socket now listening...'
-
-def clientthread(conn):
-
-	#Message sent to connected client
-	conn.send(' Welcome to daBlaqChat. Type something and hit enter\n\r\n ') #send
-
-	#start loop of threads
-	while True:
-
-		data = conn.recv(2048)
-		if data == "exit":
-			#conn.close()
-			#sys.exit(" user left... ")
-			conn.sendall(" exited ")
-			conn.close()
-			return
-		elif data:
-
-			print 'Server recieved data: ' + data
-			s.sendall(data)
-
-	#End loop of threads
-
-#Keep the Sever active
-
-input = [s,sys.stdin]
-
-while 1:
-	print 'Waiting for incoming connection...'
-	#Wait to accept connection - blocking call
-	xinput,youtput,exception = select.select( input, [], [])
-
-	for x in xinput:
-		
-		if x == s:
-#Accept connections and store in variable 'input'
-			conn, addr = s.accept()
-			input.append(conn)
-			conn.send('Happy Birthday')
-		#print 'Connected with ' + addr[0] ':' + str(addr[1])
-
-		elif x == sys.stdin:
-			junk = sys.stdin.readline()
-			data = 'nothing'
-			conn.sendall(data)
-		else:
-			data = x.recv(2048)
-			#for x in input:
-			if data:
-				x.sendall(data)
-			else:
-				x.close()
-				input.remove(x)
+class ChatServer:
 	
 
-	#Display client information
-#	print 'Connected with ' + addr[0] + ':' + str(addr[1])
-	#Talk to client again
-#	start_new_thread(clientthread ,(conn,))
+	def __init__( self, port ):
+		host = ''
+		self.port = port;
+		
+		self.s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+		self.s.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR, 1 )
+		self.s.bind( (host, port) )
+		self.s.listen( 10 )
+		
+		self.sinput = [self.s]
+		print 'ChatServer started on port %s' % port
+		
+	def run( self ):
+			
+		while 1:
+		#Await an event on a readable socket descriptors
+			(sread, swrite, sexc) = select.select( self.sinput, [], [] )
+		    # Iterate through the tagged read descriptors
+			for sock in sread:
+			
+			# Received a connect to the server (listening) socket
+				if sock == self.s:
+					self.accept_new_connection()
 
-s.close()
+				
+				#else:
+				
+			# Received something on a client socket
+				#	data = sock.recv(2048)
+					
+			
+			# Check to see if the peer socket closed
+
+				#if data == "exit":
+				#	host,port = sock.getpeername()
+				#	data = 'Client left %s:%s\r\n' % (host, port)
+				
+				#	self.broadcast_string( data, sock )
+				#	sock.close
+				#	self.sinput.remove(sock)
+				else:
+					data = sock.recv(2048)
+					host,port = sock.getpeername()
+					newdata = '[%s:%s] %s' % (host, port, data)
+					self.broadcast_string( newdata, sock )
+				
+	def broadcast_string( self, data, omit_sock ):
+		for sock in self.sinput:
+			if sock != self.s and sock != omit_sock:
+				sock.send(data)
+
+		print data;
+	def accept_new_connection( self):
+		conn, addr = self.s.accept()
+		self.sinput.append( conn )
+
+		conn.send("You're connected to the Python chatserver\r\n")
+		data = 'Client joined %s:%s\r\n' % addr
+		self.broadcast_string( data, conn )
+
+myserver = ChatServer(8085).run()
