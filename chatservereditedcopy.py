@@ -51,6 +51,7 @@ class ChatServer:
 				else:
 					data = sock.recv(2048)
 					host,port = sock.getpeername()
+<<<<<<< HEAD:chatserver.py
 					newdata = '[%s:%s] %s' % (host, port, data)
 					self.broadcast_string( newdata, sock )
 				
@@ -69,3 +70,22 @@ class ChatServer:
 		self.broadcast_string( data, conn )
 
 myserver = ChatServer(8085).run()
+=======
+					newstr = '[%s:%s] %s' % (host, port, str)
+					self.broadcast_string( newstr, sock )
+					
+		def broadcast_string( self, str, omit_sock ):
+			for sock in self.descriptors:
+				if sock != self.srvsock and sock != omit_sock:
+					sock.send(str)
+
+			print str;
+		def accept_new_connection( self, str, omit_sock ):
+			newsock, (remhost, remport) = self.srvsock.accept()
+			self.descriptors.append( newsock )
+
+			newsock.send("You're connected to the Python chatserver\r\n")
+			str = 'Client joined %s:%s\r\n' % (remhost, remport)
+			self.broadcast_string( str, newsock )
+	mysever = ChatServer(5000).run()
+>>>>>>> 8e2fb6552fa3db6f100c5d1bc262beb778d8f265:chatservereditedcopy.py
